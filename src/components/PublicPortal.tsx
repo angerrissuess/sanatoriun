@@ -25,7 +25,7 @@ export default function PublicPortal() {
     setFormData({ ...formData, phone: formatted });
   };
 
-const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (formData.checkIn >= formData.checkOut) {
@@ -45,13 +45,12 @@ const handleSubmit = async (e: React.FormEvent) => {
         body: JSON.stringify(formData)
       });
       
-      const data = await res.json(); // Читаем ответ от сервера
+      const data = await res.json();
 
       if (res.ok && data.success) {
         alert('Заявка успешно отправлена! Мы свяжемся с вами для подтверждения.');
         setFormData({ ...formData, fullName: '', phone: '', email: '', checkIn: '', checkOut: '' });
       } else {
-        // Выводим конкретную ошибку (например, что номера заняты)
         alert(data.message || 'Ошибка при отправке заявки');
       }
     } catch (err) {
@@ -111,7 +110,7 @@ const handleSubmit = async (e: React.FormEvent) => {
               {[
                 { name: 'Массаж спины', desc: 'Снятие напряжения и улучшение кровообращения', price: '1 500 ₽', img: '/img/img2.jpg' },
                 { name: 'Грязевые ванны', desc: 'Лечение суставов и кожных заболеваний', price: '2 000 ₽', img: '/img/img3.jpg' },
-                { name: 'Ароматерапия', desc: 'Восстановление нервной системы', price: '1 000 ₽', img: '/Img/img10.jpg' },
+                { name: 'Ароматерапия', desc: 'Восстановление нервной системы', price: '1 000 ₽', img: '/img/img10.jpg' },
                 { name: 'Физиотерапия', desc: 'Комплексное воздействие на организм', price: '1 800 ₽', img: '/img/img5.jpg' }
               ].map((proc, i) => (
                 <div key={i} className="bg-white rounded-3xl shadow-sm overflow-hidden border border-stone-200">
@@ -134,7 +133,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             {[
               { type: 'Стандарт', desc: 'Уютный номер для комфортного отдыха', price: 'от 3 000 ₽/сутки', img: '/img/img6.jpg' },
               { type: 'Люкс', desc: 'Просторный номер с улучшенной планировкой', price: 'от 7 000 ₽/сутки', img: '/img/img7.jpg' },
-              { type: 'Апартаменты', desc: 'Двухкомнатный номер с собственной кухней', price: 'от 12 000 ₽/сутки', img: '/Img/img8.jpg' }
+              { type: 'Апартаменты', desc: 'Двухкомнатный номер с собственной кухней', price: 'от 12 000 ₽/сутки', img: '/img/img8.jpg' }
             ].map((room, i) => (
               <div key={i} className="bg-white rounded-3xl shadow-md overflow-hidden group">
                 <div className="relative overflow-hidden">
