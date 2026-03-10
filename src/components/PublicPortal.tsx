@@ -64,7 +64,7 @@ export default function PublicPortal() {
       <main>
         {/* Hero Section */}
         <section className="relative h-[60vh] bg-stone-800 flex items-center justify-center text-center">
-          <img src="/Img/img1.jpg" alt="Санаторий" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+          <img src="/img/img1.jpg" alt="Санаторий" className="absolute inset-0 w-full h-full object-cover opacity-40" />
           <div className="relative z-10 max-w-3xl px-4">
             <h2 className="text-5xl font-serif text-white mb-4">Отдых и здоровье в гармонии с природой</h2>
             <p className="text-xl text-stone-200 mb-8">Восстановите силы в лучшем санатории региона</p>
@@ -86,7 +86,7 @@ export default function PublicPortal() {
                 <li className="flex items-center"><span className="w-2 h-2 bg-sky-500 rounded-full mr-3"></span> Трехразовое диетическое питание</li>
               </ul>
             </div>
-            <img src="/Img/img11.jpg" alt="Природа" className="rounded-3xl shadow-xl" />
+            <img src="/img/img11.jpg" alt="Природа" className="rounded-3xl shadow-xl" />
           </div>
         </section>
 
@@ -96,10 +96,10 @@ export default function PublicPortal() {
             <h3 className="text-3xl font-serif text-center mb-10 text-sky-900">Медицинские процедуры</h3>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
-                { name: 'Массаж спины', desc: 'Снятие напряжения и улучшение кровообращения', price: '1 500 ₽', img: '/Img/img2.jpg' },
-                { name: 'Грязевые ванны', desc: 'Лечение суставов и кожных заболеваний', price: '2 000 ₽', img: '/Img/img3.jpg' },
+                { name: 'Массаж спины', desc: 'Снятие напряжения и улучшение кровообращения', price: '1 500 ₽', img: '/img/img2.jpg' },
+                { name: 'Грязевые ванны', desc: 'Лечение суставов и кожных заболеваний', price: '2 000 ₽', img: '/img/img3.jpg' },
                 { name: 'Ароматерапия', desc: 'Восстановление нервной системы', price: '1 000 ₽', img: '/Img/img10.jpg' },
-                { name: 'Физиотерапия', desc: 'Комплексное воздействие на организм', price: '1 800 ₽', img: '/Img/img5.jpg' }
+                { name: 'Физиотерапия', desc: 'Комплексное воздействие на организм', price: '1 800 ₽', img: '/img/img5.jpg' }
               ].map((proc, i) => (
                 <div key={i} className="bg-white rounded-3xl shadow-sm overflow-hidden border border-stone-200">
                   <img src={proc.img} alt={proc.name} className="w-full h-48 object-cover" />
@@ -119,8 +119,8 @@ export default function PublicPortal() {
           <h3 className="text-3xl font-serif text-center mb-10 text-sky-900">Номера</h3>
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { type: 'Стандарт', desc: 'Уютный номер для комфортного отдыха', price: 'от 3 000 ₽/сутки', img: '/Img/img6.jpg' },
-              { type: 'Люкс', desc: 'Просторный номер с улучшенной планировкой', price: 'от 7 000 ₽/сутки', img: '/Img/img7.jpg' },
+              { type: 'Стандарт', desc: 'Уютный номер для комфортного отдыха', price: 'от 3 000 ₽/сутки', img: '/img/img6.jpg' },
+              { type: 'Люкс', desc: 'Просторный номер с улучшенной планировкой', price: 'от 7 000 ₽/сутки', img: '/img/img7.jpg' },
               { type: 'Апартаменты', desc: 'Двухкомнатный номер с собственной кухней', price: 'от 12 000 ₽/сутки', img: '/Img/img8.jpg' }
             ].map((room, i) => (
               <div key={i} className="bg-white rounded-3xl shadow-md overflow-hidden group">
