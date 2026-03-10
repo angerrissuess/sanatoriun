@@ -25,24 +25,37 @@ export default function PublicPortal() {
     setFormData({ ...formData, phone: formatted });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (formData.checkIn >= formData.checkOut) {
+      alert('Дата выезда должна быть позже даты заезда!');
+      return;
+    }
+
     if (formData.phone.length < 18) {
       alert('Пожалуйста, введите корректный номер телефона');
       return;
     }
+
     try {
       const res = await fetch('/api/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
-      if (res.ok) {
-        alert('Заявка успешно отправлена!');
+      
+      const data = await res.json(); // Читаем ответ от сервера
+
+      if (res.ok && data.success) {
+        alert('Заявка успешно отправлена! Мы свяжемся с вами для подтверждения.');
         setFormData({ ...formData, fullName: '', phone: '', email: '', checkIn: '', checkOut: '' });
+      } else {
+        // Выводим конкретную ошибку (например, что номера заняты)
+        alert(data.message || 'Ошибка при отправке заявки');
       }
     } catch (err) {
-      alert('Ошибка при отправке заявки');
+      alert('Ошибка соединения с сервером');
     }
   };
 
