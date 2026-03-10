@@ -110,7 +110,7 @@ export default function PublicPortal() {
               {[
                 { name: 'Массаж спины', desc: 'Снятие напряжения и улучшение кровообращения', price: '1 500 ₽', img: '/img/img2.jpg' },
                 { name: 'Грязевые ванны', desc: 'Лечение суставов и кожных заболеваний', price: '2 000 ₽', img: '/img/img3.jpg' },
-                { name: 'Ароматерапия', desc: 'Восстановление нервной системы', price: '1 000 ₽', img: '/img/img10.jpg' },
+                { name: 'Ароматерапия', desc: 'Восстановление нервной системы', price: '1 000 ₽', img: '/img/Img10.jpg' },
                 { name: 'Физиотерапия', desc: 'Комплексное воздействие на организм', price: '1 800 ₽', img: '/img/img5.jpg' }
               ].map((proc, i) => (
                 <div key={i} className="bg-white rounded-3xl shadow-sm overflow-hidden border border-stone-200">
