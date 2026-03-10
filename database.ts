@@ -52,15 +52,16 @@ db.exec(`
 // Insert mock data if empty
 const adminCount = db.prepare('SELECT COUNT(*) as count FROM AdminUser').get() as any;
 if (adminCount.count === 0) {
+  // Создаем админа
   db.prepare('INSERT INTO AdminUser (username, passwordHash) VALUES (?, ?)').run('admin', 'admin123');
   
+  // Строго по порядку создаем 15 красивых номеров
   const insertRoom = db.prepare('INSERT INTO Room (roomNumber, type, capacity, price) VALUES (?, ?, ?, ?)');
-  insertRoom.run('101', 'Стандарт', 2, 3000);
-  insertRoom.run('102', 'Стандарт', 2, 3000);
-  insertRoom.run('201', 'Люкс', 2, 7000);
-  insertRoom.run('202', 'Люкс', 2, 7000);
-  insertRoom.run('301', 'Апартаменты', 4, 12000);
+  for (let i = 1; i <= 5; i++) insertRoom.run(`Стандарт ${i}`, 'Стандарт', 2, 3000);
+  for (let i = 1; i <= 5; i++) insertRoom.run(`Люкс ${i}`, 'Люкс', 2, 7000);
+  for (let i = 1; i <= 5; i++) insertRoom.run(`Апартаменты ${i}`, 'Апартаменты', 4, 12000);
 
+  // Создаем процедуры
   const insertProc = db.prepare('INSERT INTO Procedure (name, duration, price) VALUES (?, ?, ?)');
   insertProc.run('Массаж спины', 30, 1500);
   insertProc.run('Грязевые ванны', 45, 2000);
