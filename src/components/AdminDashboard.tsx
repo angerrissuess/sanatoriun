@@ -15,7 +15,8 @@ export default function AdminDashboard({ token, onLogout }: { token: string, onL
     .then(setData)
     .catch(console.error);
   }, [token]);
-const handleDeleteGuest = async (id: number) => {
+
+  const handleDeleteGuest = async (id: number) => {
     if (!window.confirm('Вы уверены? Это удалит клиента и ВСЕ его путевки и процедуры!')) return;
     try {
       const res = await fetch(`/api/admin/guests/${id}`, {
@@ -24,8 +25,6 @@ const handleDeleteGuest = async (id: number) => {
       });
       
       if (res.ok) {
-        // Если удаление прошло успешно, запрашиваем свежие данные с сервера, 
-        // чтобы обновились и клиенты, и шахматка, и статистика
         const newDataRes = await fetch('/api/admin/data', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -55,12 +54,13 @@ const handleDeleteGuest = async (id: number) => {
           ...data,
           guests: data.guests.map((g: any) => g.id === editingGuest.id ? editingGuest : g)
         });
-        setEditingGuest(null); // Закрываем окно
+        setEditingGuest(null);
       }
     } catch (err) {
       alert('Ошибка при сохранении');
     }
   };
+
   if (!data) return <div className="min-h-screen flex items-center justify-center bg-stone-100">Загрузка...</div>;
 
   const filteredGuests = data.guests.filter((g: any) => 
@@ -183,8 +183,8 @@ const handleDeleteGuest = async (id: number) => {
                       <td className="px-6 py-4">{g.phone}</td>
                       <td className="px-6 py-4">{g.email || '-'}</td>
                       <td className="px-6 py-4">
-<button onClick={() => setEditingGuest(g)} className="text-sky-600 hover:text-sky-800 mr-3 transition">Ред.</button>
-    <button onClick={() => handleDeleteGuest(g.id)} className="text-red-600 hover:text-red-800 transition">Удалить</button>
+                        <button onClick={() => setEditingGuest(g)} className="text-sky-600 hover:text-sky-800 mr-3 transition">Ред.</button>
+                        <button onClick={() => handleDeleteGuest(g.id)} className="text-red-600 hover:text-red-800 transition">Удалить</button>
                       </td>
                     </tr>
                   ))}
@@ -200,7 +200,7 @@ const handleDeleteGuest = async (id: number) => {
             <div className="bg-white p-6 rounded-3xl shadow-sm border border-stone-200 overflow-x-auto">
               <div className="min-w-[800px]">
                 <div className="flex border-b border-stone-200 pb-2 mb-4">
-                  <div className="w-32 font-medium text-stone-500">Номер</div>
+                  <div className="w-48 flex-shrink-0 font-medium text-stone-500 pr-4">Номер</div>
                   <div className="flex-1 flex justify-between text-sm text-stone-400 px-4">
                     <span>1 Мая</span>
                     <span>5 Мая</span>
@@ -215,7 +215,7 @@ const handleDeleteGuest = async (id: number) => {
                   const roomBookings = data.bookings.filter((b: any) => b.roomId === r.id);
                   return (
                     <div key={r.id} className="flex items-center mb-4 relative h-10">
-                      <div className="w-32 font-medium text-stone-800 flex flex-col">
+                      <div className="w-48 flex-shrink-0 font-medium text-stone-800 flex flex-col pr-4">
                         <span>{r.roomNumber}</span>
                         <span className="text-xs text-stone-400">{r.type}</span>
                       </div>
@@ -246,6 +246,7 @@ const handleDeleteGuest = async (id: number) => {
           </div>
         )}
 
+        {/* ... (остальные вкладки map, procedures и модалка без изменений) */}
         {activeTab === 'map' && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -330,7 +331,7 @@ const handleDeleteGuest = async (id: number) => {
             </div>
           </div>
         )}
-        {/* Модальное окно редактирования клиента */}
+        
         {editingGuest && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white p-8 rounded-3xl w-96 shadow-xl">
