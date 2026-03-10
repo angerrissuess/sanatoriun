@@ -49,7 +49,7 @@ export default function PublicPortal() {
 
       if (res.ok && data.success) {
         alert('Заявка успешно отправлена! Мы свяжемся с вами для подтверждения.');
-        setFormData({ ...formData, fullName: '', phone: '', email: '', checkIn: '', checkOut: '' });
+        setFormData({ ...formData, fullName: '', phone: '', email: '', checkIn: '', checkOut: '', procedures: [] });
       } else {
         alert(data.message || 'Ошибка при отправке заявки');
       }
@@ -57,6 +57,33 @@ export default function PublicPortal() {
       alert('Ошибка соединения с сервером');
     }
   };
+
+  // --- ЛОГИКА КАЛЬКУЛЯТОРА ---
+  const calculateTotal = () => {
+    let days = 0;
+    if (formData.checkIn && formData.checkOut) {
+      const start = new Date(formData.checkIn);
+      const end = new Date(formData.checkOut);
+      const diffTime = end.getTime() - start.getTime();
+      days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      if (days < 0) days = 0;
+    }
+
+    let roomPrice = 3000;
+    if (formData.roomType === 'Люкс') roomPrice = 7000;
+    if (formData.roomType === 'Апартаменты') roomPrice = 12000;
+
+    const procPrices: { [key: number]: number } = { 1: 1500, 2: 2000, 3: 1000, 4: 1800 };
+    const proceduresTotal = formData.procedures.reduce((sum, id) => sum + (procPrices[id] || 0), 0);
+
+    const roomsTotal = days * roomPrice;
+    const total = roomsTotal + proceduresTotal;
+
+    return { days, roomPrice, roomsTotal, proceduresTotal, total };
+  };
+
+  const { days, roomPrice, roomsTotal, proceduresTotal, total } = calculateTotal();
+  // ---------------------------
 
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900 font-sans">
@@ -110,7 +137,7 @@ export default function PublicPortal() {
               {[
                 { name: 'Массаж спины', desc: 'Снятие напряжения и улучшение кровообращения', price: '1 500 ₽', img: '/img/img2.jpg' },
                 { name: 'Грязевые ванны', desc: 'Лечение суставов и кожных заболеваний', price: '2 000 ₽', img: '/img/img3.jpg' },
-                { name: 'Ароматерапия', desc: 'Восстановление нервной системы', price: '1 000 ₽', img: '/img/img10.jpg' },
+                { name: 'Ароматерапия', desc: 'Восстановление нервной системы', price: '1 000 ₽', img: '/img/Img10.jpg' },
                 { name: 'Физиотерапия', desc: 'Комплексное воздействие на организм', price: '1 800 ₽', img: '/img/img5.jpg' }
               ].map((proc, i) => (
                 <div key={i} className="bg-white rounded-3xl shadow-sm overflow-hidden border border-stone-200">
@@ -192,12 +219,37 @@ export default function PublicPortal() {
                     const options = Array.from(e.target.selectedOptions, option => parseInt((option as HTMLOptionElement).value));
                     setFormData({...formData, procedures: options});
                   }} className="w-full px-4 py-3 rounded-2xl border border-stone-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition h-32">
-                    <option value="1">Массаж спины</option>
-                    <option value="2">Грязевые ванны</option>
-                    <option value="3">Ароматерапия</option>
-                    <option value="4">Физиотерапия</option>
+                    <option value="1">Массаж спины (+ 1500 ₽)</option>
+                    <option value="2">Грязевые ванны (+ 2000 ₽)</option>
+                    <option value="3">Ароматерапия (+ 1000 ₽)</option>
+                    <option value="4">Физиотерапия (+ 1800 ₽)</option>
                   </select>
                 </div>
+
+                {/* --- ПАНЕЛЬ ДИНАМИЧЕСКОГО РАСЧЕТА --- */}
+                <div className="bg-sky-50 border border-sky-200 rounded-2xl p-6 my-6 transition-all duration-300">
+                  <h4 className="text-lg font-medium text-sky-900 mb-4">Предварительный расчет</h4>
+                  <div className="space-y-3 text-stone-700 text-sm mb-4">
+                    <div className="flex justify-between items-center">
+                      <span>Проживание ({days} {days === 1 ? 'сутки' : 'суток'} × {roomPrice} ₽)</span>
+                      <span className="font-medium">{roomsTotal} ₽</span>
+                    </div>
+                    {proceduresTotal > 0 && (
+                      <div className="flex justify-between items-center text-sky-700">
+                        <span>Медицинские процедуры</span>
+                        <span className="font-medium">+{proceduresTotal} ₽</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="border-t border-sky-200 pt-4 flex justify-between items-center">
+                    <span className="text-lg font-medium text-stone-800">Итого к оплате:</span>
+                    <span className="text-2xl font-bold text-sky-700">{total} ₽</span>
+                  </div>
+                  {days === 0 && (
+                    <p className="text-xs text-sky-600 mt-3 text-center">* Выберите даты заезда и выезда для точного расчета</p>
+                  )}
+                </div>
+                {/* ---------------------------------- */}
 
                 <button type="submit" className="w-full bg-sky-600 text-white font-medium py-4 rounded-full hover:bg-sky-500 transition shadow-lg text-lg">
                   Отправить заявку
