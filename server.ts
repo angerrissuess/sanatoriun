@@ -2,25 +2,24 @@ import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import db from './database.ts';
 
-// Initialize rooms
-const types = ['Стандарт', 'Люкс', 'Апартаменты'];
-let allRooms = db.prepare('SELECT * FROM Room').all();
-for (let type of types) {
-  const typeRooms = allRooms.filter((r: any) => r.type === type);
-  for (let i = 1; i <= 5; i++) {
-    const roomNumber = `Отель ${type} ${i}`;
-    const capacity = type === 'Стандарт' ? 2 : type === 'Люкс' ? 3 : 4;
-    const price = type === 'Стандарт' ? 3000 : type === 'Люкс' ? 7000 : 12000;
+// --- ИНИЦИАЛИЗАЦИЯ БАЗЫ ДАННЫХ ---
+
+try {
+  const roomCount = db.prepare('SELECT COUNT(*) as count FROM Room').get() as any;
+  if (roomCount.count === 0) {
+    const insertRoom = db.prepare('INSERT INTO Room (roomNumber, type, capacity, price) VALUES (?, ?, ?, ?)');
     
-    if (i <= typeRooms.length) {
-      db.prepare('UPDATE Room SET roomNumber = ?, capacity = ?, price = ? WHERE id = ?')
-        .run(roomNumber, capacity, price, typeRooms[i-1].id);
-    } else {
-      db.prepare('INSERT INTO Room (roomNumber, type, capacity, price) VALUES (?, ?, ?, ?)')
-        .run(roomNumber, type, capacity, price);
-    }
+    // Строго по порядку создаем 15 красивых номеров
+    for (let i = 1; i <= 5; i++) insertRoom.run(`Стандарт ${i}`, 'Стандарт', 2, 3000);
+    for (let i = 1; i <= 5; i++) insertRoom.run(`Люкс ${i}`, 'Люкс', 2, 7000);
+    for (let i = 1; i <= 5; i++) insertRoom.run(`Апартаменты ${i}`, 'Апартаменты', 2, 12000);
+    
+    console.log('✅ База номеров успешно заполнена по порядку');
   }
+} catch (error) {
+  console.error('Ошибка при инициализации номеров:', error);
 }
+
 try {
   const existingProcedures = db.prepare('SELECT * FROM Procedure').all();
   if (existingProcedures.length === 0) {
@@ -30,18 +29,23 @@ try {
     insertProc.run(2, 'Грязевые ванны');
     insertProc.run(3, 'Ароматерапия');
     insertProc.run(4, 'Физиотерапия');
-    console.log('Справочник процедур успешно заполнен');
+    console.log('✅ Справочник процедур успешно заполнен');
   }
 } catch (error) {
   console.error('Ошибка при инициализации процедур. Проверьте файл database.ts', error);
 }
+
+// --- ЗАПУСК СЕРВЕРА ---
+
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  // Динамический порт для работы на облачном хостинге Render
+  const PORT = process.env.PORT || 3000;
 
   app.use(express.json());
 
-  // API Routes
+  // --- API МАРШРУТЫ ---
+
   app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
     const user = db.prepare('SELECT * FROM AdminUser WHERE username = ?').get(username) as any;
@@ -61,17 +65,15 @@ async function startServer() {
       const guestResult = insertGuest.run(fullName, phone, email || null);
       const guestId = guestResult.lastInsertRowid;
 
-      // Find a room of roomType
-// Умный поиск свободного номера (исключаем те, где даты пересекаются)
+      // Умный поиск свободного номера с исключением занятых дат
       const room = db.prepare(`
         SELECT id, price FROM Room 
         WHERE type = ? AND id NOT IN (
           SELECT roomId FROM Booking 
           WHERE status != 'Cancelled' AND (checkIn < ? AND checkOut > ?)
-        ) LIMIT 1
+        ) ORDER BY id ASC LIMIT 1
       `).get(roomType, checkOut, checkIn) as any;
 
-      // Если свободных номеров нет, прерываем процесс и отправляем ошибку гостю
       if (!room) {
         return res.status(400).json({ 
           success: false, 
@@ -83,7 +85,7 @@ async function startServer() {
       const price = room.price;
 
       const insertBooking = db.prepare('INSERT INTO Booking (guestId, roomId, checkIn, checkOut, status, totalPrice) VALUES (?, ?, ?, ?, ?, ?)');
-      const bookingResult = insertBooking.run(guestId, roomId, checkIn, checkOut, 'Pending', price * 3); // simplified price calc
+      const bookingResult = insertBooking.run(guestId, roomId, checkIn, checkOut, 'Pending', price * 3);
       const bookingId = bookingResult.lastInsertRowid;
 
       if (procedures && procedures.length > 0) {
@@ -101,7 +103,8 @@ async function startServer() {
   });
 
   app.get('/api/public/map', (req, res) => {
-    const rooms = db.prepare('SELECT * FROM Room').all();
+    // ORDER BY id ASC гарантирует идеальный порядок
+    const rooms = db.prepare('SELECT * FROM Room ORDER BY id ASC').all();
     const bookings = db.prepare(`
       SELECT b.*, g.fullName, g.phone, r.roomNumber 
       FROM Booking b 
@@ -109,27 +112,18 @@ async function startServer() {
       JOIN Room r ON b.roomId = r.id
     `).all();
 
-    res.json({
-      rooms,
-      bookings
-    });
+    res.json({ rooms, bookings });
   });
-app.delete('/api/admin/guests/:id', (req, res) => {
+
+  app.delete('/api/admin/guests/:id', (req, res) => {
     const authHeader = req.headers.authorization;
     if (authHeader !== 'Bearer fake-jwt-token') return res.status(401).json({ message: 'Unauthorized' });
 
     try {
-      const guestId = Number(req.params.id); // Убеждаемся, что ID это число
-
-      // 1. Сначала удаляем записи о процедурах, привязанные к брони этого гостя
+      const guestId = Number(req.params.id);
       db.prepare('DELETE FROM BookingProcedure WHERE bookingId IN (SELECT id FROM Booking WHERE guestId = ?)').run(guestId);
-      
-      // 2. Затем удаляем сами бронирования этого гостя
       db.prepare('DELETE FROM Booking WHERE guestId = ?').run(guestId);
-      
-      // 3. И только теперь безопасно удаляем карточку гостя
       db.prepare('DELETE FROM Guest WHERE id = ?').run(guestId);
-      
       res.json({ success: true });
     } catch (error) {
       console.error('Ошибка при удалении гостя:', error);
@@ -137,7 +131,6 @@ app.delete('/api/admin/guests/:id', (req, res) => {
     }
   });
 
-  // Обновление клиента
   app.put('/api/admin/guests/:id', (req, res) => {
     const authHeader = req.headers.authorization;
     if (authHeader !== 'Bearer fake-jwt-token') return res.status(401).json({ message: 'Unauthorized' });
@@ -151,6 +144,7 @@ app.delete('/api/admin/guests/:id', (req, res) => {
       res.status(500).json({ success: false, message: 'Ошибка обновления' });
     }
   });
+
   app.get('/api/admin/data', (req, res) => {
     const authHeader = req.headers.authorization;
     if (authHeader !== 'Bearer fake-jwt-token') {
@@ -158,7 +152,8 @@ app.delete('/api/admin/guests/:id', (req, res) => {
     }
 
     const guests = db.prepare('SELECT * FROM Guest').all();
-    const rooms = db.prepare('SELECT * FROM Room').all();
+    // ORDER BY id ASC гарантирует идеальный порядок в админке
+    const rooms = db.prepare('SELECT * FROM Room ORDER BY id ASC').all();
 
     const bookings = db.prepare(`
       SELECT b.*, g.fullName, g.phone, r.roomNumber 
@@ -166,6 +161,7 @@ app.delete('/api/admin/guests/:id', (req, res) => {
       JOIN Guest g ON b.guestId = g.id 
       JOIN Room r ON b.roomId = r.id
     `).all();
+    
     const procedures = db.prepare('SELECT * FROM Procedure').all();
     const procedureSchedules = db.prepare(`
       SELECT bp.*, p.name as procedureName, g.fullName as guestName, r.roomNumber
@@ -194,7 +190,7 @@ app.delete('/api/admin/guests/:id', (req, res) => {
     });
   });
 
-  // Vite middleware
+  // --- VITE & STATIC ФАЙЛЫ ---
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -205,8 +201,8 @@ app.delete('/api/admin/guests/:id', (req, res) => {
     app.use(express.static('dist'));
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
   });
 }
 
