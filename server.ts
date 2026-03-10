@@ -62,9 +62,25 @@ async function startServer() {
       const guestId = guestResult.lastInsertRowid;
 
       // Find a room of roomType
-      const room = db.prepare('SELECT id, price FROM Room WHERE type = ? LIMIT 1').get(roomType) as any;
-      const roomId = room ? room.id : 1; // fallback
-      const price = room ? room.price : 5000;
+// Умный поиск свободного номера (исключаем те, где даты пересекаются)
+      const room = db.prepare(`
+        SELECT id, price FROM Room 
+        WHERE type = ? AND id NOT IN (
+          SELECT roomId FROM Booking 
+          WHERE status != 'Cancelled' AND (checkIn < ? AND checkOut > ?)
+        ) LIMIT 1
+      `).get(roomType, checkOut, checkIn) as any;
+
+      // Если свободных номеров нет, прерываем процесс и отправляем ошибку гостю
+      if (!room) {
+        return res.status(400).json({ 
+          success: false, 
+          message: `К сожалению, все номера категории «${roomType}» на эти даты заняты. Пожалуйста, выберите другие даты или тип номера.` 
+        });
+      }
+
+      const roomId = room.id;
+      const price = room.price;
 
       const insertBooking = db.prepare('INSERT INTO Booking (guestId, roomId, checkIn, checkOut, status, totalPrice) VALUES (?, ?, ?, ?, ?, ?)');
       const bookingResult = insertBooking.run(guestId, roomId, checkIn, checkOut, 'Pending', price * 3); // simplified price calc
