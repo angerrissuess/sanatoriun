@@ -1,6 +1,6 @@
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
-import db from './database.js';
+import db from './database.ts';
 
 // Initialize rooms
 const types = ['Стандарт', 'Люкс', 'Апартаменты'];
